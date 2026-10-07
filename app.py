@@ -1,4 +1,4 @@
-﻿import telebot
+import telebot
 from telebot import types
 import sqlite3
 import os
@@ -10,26 +10,21 @@ import string
 from datetime import datetime, timedelta
 from flask import Flask
 
-
 TOKEN = os.environ.get("BOT_TOKEN", "").strip()
 DB_FILE = "cars.db"
 OWNER_ID = os.environ.get("OWNER_ID", "").strip()
 ADMIN_IDS = [x.strip() for x in os.environ.get("ADMIN_IDS", "").split(",") if x.strip()]
 SECRET_CODE = "DEL202"
 
-
 PHOTOS_DIR = "cars"
 WHEELIE_DIR = "wheelie"
 SWAPPED_DIR = "swapped"
 GARAGE_DIR = "garage"
 
-
 app = Flask(__name__)
 bot = telebot.TeleBot(TOKEN)
 
-
 # ========== БАЗА ТРАНСПОРТА ==========
-
 
 CARS = [
     # ===== МАШИНЫ — Уровень 1 =====
@@ -47,7 +42,6 @@ CARS = [
     {"key": "lada_priora", "name": "Lada Priora", "level": 1, "base": 280000, "problems": 3, "hp": 98, "weight": 1085, "drive": "FWD"},
     {"key": "daewoo_nexia", "name": "Daewoo Nexia", "level": 1, "base": 140000, "problems": 4, "hp": 85, "weight": 960, "drive": "FWD"},
 
-
     # ===== МАШИНЫ — Уровень 2 =====
     {"key": "renault_logan", "name": "Renault Logan", "level": 2, "base": 350000, "problems": 3, "hp": 102, "weight": 1127, "drive": "FWD"},
     {"key": "chevrolet_cruze", "name": "Chevrolet Cruze", "level": 2, "base": 700000, "problems": 3, "hp": 141, "weight": 1315, "drive": "FWD"},
@@ -61,7 +55,6 @@ CARS = [
     {"key": "bmw_e30", "name": "BMW E30", "level": 2, "base": 500000, "problems": 3, "hp": 170, "weight": 1200, "drive": "RWD"},
     {"key": "toyota_mark_ii", "name": "Toyota Mark II", "level": 2, "base": 1100000, "problems": 3, "hp": 220, "weight": 1450, "drive": "RWD"},
     {"key": "nissan_laurel_c35", "name": "Nissan Laurel C35", "level": 2, "base": 450000, "problems": 3, "hp": 200, "weight": 1400, "drive": "RWD"},
-
 
     # ===== МАШИНЫ — Уровень 3 =====
     {"key": "toyota_camry", "name": "Toyota Camry", "level": 3, "base": 2500000, "problems": 2, "hp": 249, "weight": 1550, "drive": "FWD"},
@@ -80,14 +73,12 @@ CARS = [
     {"key": "lexus_rx", "name": "Lexus RX", "level": 3, "base": 4500000, "problems": 2, "hp": 300, "weight": 1950, "drive": "AWD"},
     {"key": "porsche_macan", "name": "Porsche Macan", "level": 3, "base": 5000000, "problems": 2, "hp": 340, "weight": 1870, "drive": "AWD"},
 
-
     # ===== МОТОЦИКЛЫ — Уровень 1 =====
     {"key": "vento_riva_2_rx", "name": "Vento Riva 2 RX", "level": 1, "base": 60000, "problems": 4, "type": "moto", "cc": 110, "hp": 6.5, "weight": 95, "drive": "цепь"},
     {"key": "vento_riva_2_sx", "name": "Vento Riva 2 SX", "level": 1, "base": 65000, "problems": 4, "type": "moto", "cc": 110, "hp": 6.5, "weight": 95, "drive": "цепь"},
     {"key": "vento_riva_2_classic", "name": "Vento Riva 2 Classic", "level": 1, "base": 62000, "problems": 4, "type": "moto", "cc": 110, "hp": 6.5, "weight": 95, "drive": "цепь"},
     {"key": "kayo_tt125", "name": "Kayo TT125", "level": 1, "base": 85000, "problems": 4, "type": "moto", "cc": 125, "hp": 11, "weight": 100, "drive": "цепь"},
     {"key": "kayo_tt140", "name": "Kayo TT140", "level": 1, "base": 95000, "problems": 4, "type": "moto", "cc": 140, "hp": 13, "weight": 105, "drive": "цепь"},
-
 
     # ===== МОТОЦИКЛЫ — Уровень 2 =====
     {"key": "kayo_k1", "name": "Kayo K1", "level": 2, "base": 140000, "problems": 3, "type": "moto", "cc": 250, "hp": 22, "weight": 120, "drive": "цепь"},
@@ -97,7 +88,6 @@ CARS = [
     {"key": "xgz_ktx_pr300", "name": "XGZ KTX PR300", "level": 2, "base": 190000, "problems": 3, "type": "moto", "cc": 300, "hp": 25, "weight": 130, "drive": "цепь"},
     {"key": "bajaj_boxer_150", "name": "Bajaj Boxer 150", "level": 2, "base": 130000, "problems": 3, "type": "moto", "cc": 150, "hp": 12, "weight": 120, "drive": "цепь"},
 
-
     # ===== МОТОЦИКЛЫ — Уровень 3 =====
     {"key": "yamaha_yz125", "name": "Yamaha YZ125", "level": 3, "base": 600000, "problems": 2, "type": "moto", "cc": 125, "hp": 35, "weight": 95, "drive": "цепь"},
     {"key": "yamaha_yz250f", "name": "Yamaha YZ250F", "level": 3, "base": 850000, "problems": 2, "type": "moto", "cc": 250, "hp": 40, "weight": 105, "drive": "цепь"},
@@ -105,7 +95,6 @@ CARS = [
     {"key": "yamaha_r1", "name": "Yamaha R1", "level": 3, "base": 1200000, "problems": 2, "type": "moto", "cc": 1000, "hp": 200, "weight": 200, "drive": "цепь"},
     {"key": "ktm_duke_1390", "name": "KTM Duke 1390", "level": 3, "base": 1900000, "problems": 2, "type": "moto", "cc": 1390, "hp": 190, "weight": 180, "drive": "цепь"},
 ]
-
 
 PROBLEMS = {
     "engine": [("Свечи", 8000), ("Троит", 25000), ("Жрёт масло", 55000), ("Капиталка", 150000)],
@@ -115,18 +104,14 @@ PROBLEMS = {
     "interior": [("Пятна", 3000), ("Порваны сиденья", 18000), ("Перетяжка", 60000)],
 }
 
-
 SWAP_KEYS = ["vaz_2101", "vaz_2106", "vaz_2107", "vaz_2109", "vaz_2110",
              "vaz_2112", "vaz_2113", "vaz_2114",
              "vento_riva_2_rx", "vento_riva_2_sx", "vento_riva_2_classic"]
 
-
 ALPHA_KEYS = ["vento_riva_2_rx", "vento_riva_2_sx", "vento_riva_2_classic"]
-
 
 GARAGE_PRICES = {1: 0, 2: 300000, 3: 800000, 4: 2000000, 5: 5000000}
 GARAGE_SLOTS = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
-
 
 BUSINESSES = {
     "carwash": {"name": "🚿 Автомойка", "price": 500000, "income": 5000, "perk": "Бесплатная мойка"},
@@ -135,7 +120,6 @@ BUSINESSES = {
     "factory": {"name": "🏭 Автозавод", "price": 50000000, "income": 500000, "perk": "Бесплатная тачка раз в день"},
     "gas_stations": {"name": "⛽ Сеть АЗС", "price": 200000000, "income": 2000000, "perk": "Бонус ×3"},
 }
-
 
 EVENT_TYPES = [
     {"key": "crisis", "name": "📉 Кризис на рынке", "mult": 0.75, "desc": "Все цены упали на 25%"},
@@ -148,25 +132,20 @@ EVENT_TYPES = [
     {"key": "fuel", "name": "⛽ Бензин подорожал", "mult": 0.9, "desc": "Прожорливые -10%"},
 ]
 
-
 JDM_BRANDS = ["toyota", "honda", "mazda", "nissan", "lexus", "subaru", "mitsubishi"]
 SUV_KEYWORDS = ["rav4", "sportage", "creta", "tucson", "tiguan", "kodiaq",
                 "x5", "q7", "gle", "rx", "macan", "cayenne"]
 
-
 # ========== ФУНКЦИИ ==========
-
 
 def fmt(n):
     return "{:,}".format(int(n)).replace(",", " ")
-
 
 def get_car_by_key(car_key):
     for c in CARS:
         if c["key"] == car_key:
             return c
     return None
-
 
 def get_photo(car_key, swapped=False):
     if swapped:
@@ -180,14 +159,12 @@ def get_photo(car_key, swapped=False):
             return path
     return None
 
-
 def get_wheelie_photo(car_key):
     for ext in ["jpg", "jpeg", "png", "webp"]:
         path = os.path.join(WHEELIE_DIR, car_key + "." + ext)
         if os.path.exists(path):
             return path
     return None
-
 
 def get_garage_photo(level):
     for ext in ["jpg", "jpeg", "png", "webp"]:
@@ -196,14 +173,11 @@ def get_garage_photo(level):
             return path
     return None
 
-
 def is_alpha(car_key):
     return car_key in ALPHA_KEYS
 
-
 def can_swap(car_key):
     return car_key in SWAP_KEYS
-
 
 def generate_problems(car):
     result = []
@@ -220,9 +194,7 @@ def generate_problems(car):
         result.append({"type": t, "name": name, "cost": cost, "fixed": False})
     return result
 
-
 # ========== БАЗА ДАННЫХ ==========
-
 
 def db_init():
     conn = sqlite3.connect(DB_FILE)
@@ -296,13 +268,10 @@ def db_init():
         except Exception: pass
     conn.commit(); conn.close()
 
-
 # ========== ХЕЛПЕРЫ ==========
-
 
 def is_owner(user_id):
     return bool(OWNER_ID) and str(user_id) == OWNER_ID
-
 
 def is_admin(user_id):
     uid = str(user_id)
@@ -313,13 +282,11 @@ def is_admin(user_id):
     row = c.fetchone(); conn.close()
     return row is not None
 
-
 def is_banned(user_id):
     conn = sqlite3.connect(DB_FILE); c = conn.cursor()
     c.execute("SELECT reason FROM banned WHERE user_id=?", (str(user_id),))
     row = c.fetchone(); conn.close()
     return row
-
 
 def check_ban(message):
     ban = is_banned(message.from_user.id)
@@ -328,7 +295,6 @@ def check_ban(message):
         return True
     return False
 
-
 def get_player(uid):
     conn = sqlite3.connect(DB_FILE); c = conn.cursor()
     c.execute("""SELECT user_id, name, username, money, level, exp, reputation,
@@ -336,7 +302,6 @@ def get_player(uid):
                  FROM players WHERE user_id=?""", (str(uid),))
     row = c.fetchone(); conn.close()
     return row
-
 
 def find_player_by_username(username):
     uname = username.lstrip("@").strip()
@@ -349,20 +314,17 @@ def find_player_by_username(username):
     conn.close()
     return row
 
-
 def has_business(user_id, biz_key):
     conn = sqlite3.connect(DB_FILE); c = conn.cursor()
     c.execute("SELECT 1 FROM businesses WHERE user_id=? AND biz_key=?", (str(user_id), biz_key))
     row = c.fetchone(); conn.close()
     return row is not None
 
-
 def get_businesses(user_id):
     conn = sqlite3.connect(DB_FILE); c = conn.cursor()
     c.execute("SELECT id, biz_key, biz_name, last_collect FROM businesses WHERE user_id=?", (str(user_id),))
     rows = c.fetchall(); conn.close()
     return rows
-
 
 def main_kb(uid):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -374,9 +336,7 @@ def main_kb(uid):
     markup.add("👤 Профиль", "💼 Бизнесы")
     if is_admin(uid):
         markup.add("👥 Игроки", "📢 Сообщение")
-    return markup
-# ========== РЫНОК ==========
-
+    return markup# ========== РЫНОК ==========
 
 def get_market_multiplier(car_key):
     conn = sqlite3.connect(DB_FILE); c = conn.cursor()
@@ -384,13 +344,11 @@ def get_market_multiplier(car_key):
     row = c.fetchone(); conn.close()
     return row[0] if row else 1.0
 
-
 def get_active_event():
     conn = sqlite3.connect(DB_FILE); c = conn.cursor()
     c.execute("SELECT event_type, event_data, multiplier, started, ends FROM market_events WHERE active=1 ORDER BY id DESC LIMIT 1")
     row = c.fetchone(); conn.close()
     return row
-
 
 @bot.message_handler(commands=['start', 'menu'])
 def start(message):
@@ -409,7 +367,6 @@ def start(message):
     bot.send_message(message.chat.id,
         "🚗 С возвращением, " + p[1] + "!\n\nЖми кнопки внизу 👇",
         reply_markup=main_kb(message.from_user.id))
-
 
 def reg_name(message):
     if check_ban(message): return
@@ -434,7 +391,6 @@ def reg_name(message):
         "Начни с «🔍 Найти тачку»!",
         reply_markup=main_kb(message.from_user.id))
 
-
 @bot.message_handler(commands=['help'])
 def help_cmd(message):
     if check_ban(message): return
@@ -446,13 +402,11 @@ def help_cmd(message):
         text += "\n\n🔑 /adminhelp — админ-команды"
     bot.send_message(message.chat.id, text, reply_markup=main_kb(message.from_user.id))
 
-
 @bot.message_handler(commands=['rename'])
 def rename_cmd(message):
     if check_ban(message): return
     msg = bot.send_message(message.chat.id, "🔄 Напиши новое имя:", reply_markup=types.ForceReply())
     bot.register_next_step_handler(msg, rename_step)
-
 
 def rename_step(message):
     if check_ban(message): return
@@ -464,9 +418,7 @@ def rename_step(message):
     conn.commit(); conn.close()
     bot.send_message(message.chat.id, "✅ Теперь ты " + name, reply_markup=main_kb(message.from_user.id))
 
-
 # ========== РЫНОК ==========
-
 
 @bot.message_handler(func=lambda m: m.text == "📊 Рынок")
 def market(message):
@@ -504,9 +456,7 @@ def market(message):
     else:
         bot.send_message(message.chat.id, text)
 
-
 # ========== ПОИСК ТАЧКИ ==========
-
 
 @bot.message_handler(func=lambda m: m.text == "🔍 Найти тачку")
 def find_car(message):
@@ -562,9 +512,7 @@ def find_car(message):
             except Exception as e: print("Photo error:", e)
         bot.send_message(message.chat.id, caption + "\n📷 фото не найдено", reply_markup=markup)
 
-
 # ========== ОСМОТР ==========
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("ins_"))
 def inspect_car(call):
@@ -589,7 +537,6 @@ def inspect_car(call):
     found = random.choice(problems)
     prefix = "🆓 " if cost == 0 else "👀 "
     bot.answer_callback_query(call.id, prefix + "Найдено: " + found["name"], show_alert=True)
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("diag_"))
 def diag_car(call):
@@ -621,9 +568,7 @@ def diag_car(call):
     bot.send_message(call.from_user.id, text)
     bot.answer_callback_query(call.id)
 
-
 # ========== ПОКУПКА ==========
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("buy_"))
 def buy_car(call):
@@ -690,7 +635,6 @@ def buy_car(call):
             "🚗 " + car_name + " куплен!\n\nДовезли без приключений. Повезло! ✅",
             reply_markup=main_kb(call.from_user.id))
 
-
 def generate_random_problem_for_breakdown(car):
     if not car:
         types_list = list(PROBLEMS.keys())
@@ -707,7 +651,6 @@ def generate_random_problem_for_breakdown(car):
     cost = int(cost * (car.get("level", 1) ** 1.5))
     return {"type": t, "name": name, "cost": cost, "fixed": False}
 
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("skip_"))
 def skip_car(call):
     lid = int(call.data.split("_")[1])
@@ -718,9 +661,7 @@ def skip_car(call):
     except Exception: pass
     bot.answer_callback_query(call.id, "Пропущено")
 
-
 # ========== ТОРГ ==========
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("haggle_"))
 def haggle_car(call):
@@ -745,7 +686,6 @@ def haggle_car(call):
     markup.add(types.InlineKeyboardButton("❌ Отмена", callback_data="hg_" + str(lid) + "_0"))
     bot.send_message(call.from_user.id, "🤝 Цена: " + fmt(price) + " ₽\n\nСколько предложишь?", reply_markup=markup)
     bot.answer_callback_query(call.id)
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("hg_"))
 def haggle_result(call):
@@ -778,9 +718,7 @@ def haggle_result(call):
         bot.send_message(call.from_user.id, "😤 Хозяин: «Не, братан, за столько сам ездить буду»")
         bot.answer_callback_query(call.id, "Отказ")
 
-
 # ========== ГАРАЖ ==========
-
 
 @bot.message_handler(func=lambda m: m.text == "🏠 Мой гараж")
 def my_garage(message):
@@ -854,7 +792,6 @@ def my_garage(message):
                    callback_data="car_" + str(gid)))
     bot.send_message(message.chat.id, "Выбери тачку:", reply_markup=markup)
 
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("car_"))
 def show_car(call):
     if is_banned(call.from_user.id):
@@ -927,21 +864,17 @@ def show_car(call):
     bot.send_message(call.from_user.id, text, reply_markup=markup)
     bot.answer_callback_query(call.id)
 
-
 @bot.callback_query_handler(func=lambda c: c.data == "close_car")
 def close_car(call):
     try: bot.delete_message(call.message.chat.id, call.message.message_id)
     except Exception: pass
     bot.answer_callback_query(call.id)
 
-
 @bot.callback_query_handler(func=lambda c: c.data == "nothing")
 def nothing_cb(call):
     bot.answer_callback_query(call.id)
 
-
 # ========== РЕМОНТ ==========
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("repair_"))
 def repair_menu(call):
@@ -965,7 +898,6 @@ def repair_menu(call):
     markup.add(types.InlineKeyboardButton("⬅ Назад", callback_data="car_" + str(gid)))
     bot.send_message(call.from_user.id, "🔧 Что ремонтируем?", reply_markup=markup)
     bot.answer_callback_query(call.id)
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("fix_"))
 def do_fix(call):
@@ -1003,7 +935,6 @@ def do_fix(call):
     markup.add(types.InlineKeyboardButton("⬅ Отмена", callback_data="car_" + str(gid)))
     bot.send_message(call.from_user.id, text, reply_markup=markup)
     bot.answer_callback_query(call.id)
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("fixgo_"))
 def fix_go(call):
@@ -1045,9 +976,7 @@ def fix_go(call):
     bot.answer_callback_query(call.id, "✅" if success else "❌")
     bot.send_message(call.from_user.id, result_text)
 
-
 # ========== СВАП ==========
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("swapmenu_"))
 def swap_menu(call):
@@ -1076,7 +1005,6 @@ def swap_menu(call):
     bot.send_message(call.from_user.id, text, reply_markup=markup)
     bot.answer_callback_query(call.id)
 
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("swap_"))
 def do_swap(call):
     parts = call.data.split("_")
@@ -1099,9 +1027,7 @@ def do_swap(call):
     else:
         bot.send_message(call.from_user.id, "🔄 Поставлен мотор " + str(new_cc) + " куб!")
 
-
 # ========== ВИЛИ ==========
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("wheelie_"))
 def wheelie(call):
@@ -1152,9 +1078,7 @@ def wheelie(call):
     bot.send_message(call.from_user.id, caption)
     bot.answer_callback_query(call.id, "🔥")
 
-
 # ========== ДРИФТ ==========
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("drift_"))
 def drift_car(call):
@@ -1201,9 +1125,7 @@ def drift_car(call):
     bot.answer_callback_query(call.id, "🎨" if roll <= chance else "💥")
     bot.send_message(call.from_user.id, caption)
 
-
 # ========== ТУРБИНА ==========
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("turbomenu_"))
 def turbo_menu(call):
@@ -1231,7 +1153,6 @@ def turbo_menu(call):
     bot.send_message(call.from_user.id, text, reply_markup=markup)
     bot.answer_callback_query(call.id)
 
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("turboinstall_"))
 def turbo_install(call):
     if is_banned(call.from_user.id):
@@ -1257,9 +1178,7 @@ def turbo_install(call):
     bot.answer_callback_query(call.id, "✅ Турбина установлена!", show_alert=True)
     bot.send_message(call.from_user.id, "🌀 Турбина установлена на " + car_name + "!")
 
-
 # ========== МОЙКА И ТО ==========
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("wash_"))
 def wash_car(call):
@@ -1285,7 +1204,6 @@ def wash_car(call):
     bot.answer_callback_query(call.id, "✅ Помыто!", show_alert=True)
     bot.send_message(call.from_user.id, "💦 Помыто! Следующие 3 продажи: -15% к торгу.")
 
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("service_"))
 def service_car(call):
     if is_banned(call.from_user.id):
@@ -1308,9 +1226,7 @@ def service_car(call):
     bot.answer_callback_query(call.id, "✅ ТО сделано!", show_alert=True)
     bot.send_message(call.from_user.id, "🔧 ТО! Следующие 3 продажи: -20% к торгу, +10% к цене.")
 
-
 # ========== ПРОДАЖА ==========
-
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("sell_"))
 def sell_start(call):
@@ -1332,7 +1248,6 @@ def sell_start(call):
     bot.register_next_step_handler(msg, sell_set_price, gid, uid)
     bot.answer_callback_query(call.id)
 
-
 def sell_set_price(message, gid, uid):
     if check_ban(message): return
     try:
@@ -1353,7 +1268,6 @@ def sell_set_price(message, gid, uid):
         "⏳ Ждём покупателя...\n\nПримерное время: " + wait_text,
         reply_markup=main_kb(int(uid)))
     threading.Thread(target=sell_timer, args=(int(uid), gid, price, wait_seconds), daemon=True).start()
-
 
 def sell_timer(chat_id, gid, asking_price, wait_seconds):
     time.sleep(wait_seconds)
@@ -1459,7 +1373,6 @@ def sell_timer(chat_id, gid, asking_price, wait_seconds):
         conn.commit(); conn.close()
         bot.send_message(chat_id, "😔 Покупатель не пришёл.\n\n" + car_name + " остаётся в гараже.")
 
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("sellok_"))
 def sell_ok(call):
     parts = call.data.split("_")
@@ -1480,14 +1393,11 @@ def sell_ok(call):
     bot.answer_callback_query(call.id, "✅ Продано!")
     bot.send_message(call.from_user.id, "✅ " + car_name + " продана за " + fmt(price) + " ₽\n+15 опыта")
 
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("sellno_"))
 def sell_no(call):
     bot.answer_callback_query(call.id, "Отказано")
     bot.send_message(call.from_user.id, "❌ Отказал покупателю. Тачка в гараже.",
-                     reply_markup=main_kb(call.from_user.id))
-# ========== ПРОФИЛЬ ==========
-
+                     reply_markup=main_kb(call.from_user.id))# ========== ПРОФИЛЬ ==========
 
 @bot.message_handler(func=lambda m: m.text == "👤 Профиль")
 def profile(message):
@@ -1521,8 +1431,6 @@ def profile(message):
     bot.send_message(message.chat.id, text, reply_markup=markup)
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data == "upgrade_garage")
 def upgrade_garage_menu(call):
     uid = str(call.from_user.id)
@@ -1548,8 +1456,6 @@ def upgrade_garage_menu(call):
     bot.answer_callback_query(call.id)
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("buy_garage_"))
 def buy_garage(call):
     uid = str(call.from_user.id)
@@ -1568,10 +1474,7 @@ def buy_garage(call):
         reply_markup=main_kb(call.from_user.id))
 
 
-
-
 # ========== БАЛАНС ==========
-
 
 @bot.message_handler(func=lambda m: m.text == "💰 Баланс")
 def balance(message):
@@ -1586,10 +1489,7 @@ def balance(message):
         reply_markup=main_kb(message.from_user.id))
 
 
-
-
 # ========== БИЗНЕСЫ ==========
-
 
 @bot.message_handler(func=lambda m: m.text == "💼 Бизнесы")
 def businesses_menu(message):
@@ -1624,8 +1524,6 @@ def businesses_menu(message):
     bot.send_message(message.chat.id, text[:4000], reply_markup=markup)
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("bizbuy_"))
 def biz_buy(call):
     if is_banned(call.from_user.id):
@@ -1653,8 +1551,6 @@ def biz_buy(call):
     bot.send_message(call.from_user.id,
         "💼 " + biz["name"] + " куплен!\n\n💰 Доход: " + fmt(biz["income"]) + " ₽/час\n🎁 " + biz["perk"],
         reply_markup=main_kb(call.from_user.id))
-
-
 
 
 @bot.callback_query_handler(func=lambda c: c.data == "bizcollect")
@@ -1691,10 +1587,7 @@ def biz_collect(call):
     bot.send_message(call.from_user.id, "💰 Собрано: " + fmt(total) + " ₽")
 
 
-
-
 # ========== ГОНКИ ==========
-
 
 @bot.message_handler(func=lambda m: m.text == "🏁 Гонки")
 def races_menu(message):
@@ -1714,8 +1607,6 @@ def races_menu(message):
     bot.send_message(message.chat.id, "🏁 Гонки\n\nВыбери режим:", reply_markup=markup)
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data == "raceback")
 def race_back(call):
     bot.answer_callback_query(call.id)
@@ -1723,8 +1614,6 @@ def race_back(call):
         reply_markup=types.InlineKeyboardMarkup(row_width=1).add(
             types.InlineKeyboardButton("🤖 С ботом", callback_data="racebot"),
             types.InlineKeyboardButton("👤 С игроком", callback_data="racepvp")))
-
-
 
 
 @bot.callback_query_handler(func=lambda c: c.data == "racebot")
@@ -1743,8 +1632,6 @@ def racebot_menu(call):
     markup.add(types.InlineKeyboardButton("⬅ Назад", callback_data="raceback"))
     bot.send_message(call.from_user.id, "🏁 Выбери тачку:", reply_markup=markup)
     bot.answer_callback_query(call.id)
-
-
 
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("rbot_"))
@@ -1780,8 +1667,6 @@ def racebot_difficulty(call):
     markup.add(types.InlineKeyboardButton("⬅ Отмена", callback_data="raceback"))
     bot.send_message(call.from_user.id, text, reply_markup=markup)
     bot.answer_callback_query(call.id)
-
-
 
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("rstart_"))
@@ -1849,10 +1734,7 @@ def racebot_start(call):
             "Соперник был: ~" + str(bot_hp) + " л.с.")
 
 
-
-
 # ========== PVP ГОНКИ ==========
-
 
 @bot.callback_query_handler(func=lambda c: c.data == "racepvp")
 def racepvp_menu(call):
@@ -1866,8 +1748,6 @@ def racepvp_menu(call):
     markup.add(types.InlineKeyboardButton("⬅ Назад", callback_data="raceback"))
     bot.send_message(call.from_user.id, "👤 Гонка с игроком\n\nВыбери:", reply_markup=markup)
     bot.answer_callback_query(call.id)
-
-
 
 
 @bot.callback_query_handler(func=lambda c: c.data == "pvpcreate")
@@ -1886,8 +1766,6 @@ def pvp_create(call):
     bot.answer_callback_query(call.id)
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pvpcar_"))
 def pvp_car_select(call):
     gid = int(call.data.split("_")[1])
@@ -1896,8 +1774,6 @@ def pvp_car_select(call):
         reply_markup=types.ForceReply())
     bot.register_next_step_handler(msg, pvp_set_bet, gid, uid)
     bot.answer_callback_query(call.id)
-
-
 
 
 def pvp_set_bet(message, gid, uid):
@@ -1925,8 +1801,6 @@ def pvp_set_bet(message, gid, uid):
     threading.Thread(target=pvp_cleanup, args=(code,), daemon=True).start()
 
 
-
-
 def pvp_cleanup(code):
     time.sleep(1800)
     conn = sqlite3.connect(DB_FILE); c = conn.cursor()
@@ -1938,16 +1812,12 @@ def pvp_cleanup(code):
     conn.close()
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data == "pvpjoin")
 def pvp_join(call):
     uid = str(call.from_user.id)
     msg = bot.send_message(call.from_user.id, "🔑 Введи код заезда:", reply_markup=types.ForceReply())
     bot.register_next_step_handler(msg, pvp_join_code, uid)
     bot.answer_callback_query(call.id)
-
-
 
 
 def pvp_join_code(message, uid):
@@ -1975,8 +1845,6 @@ def pvp_join_code(message, uid):
     for r in rows[:10]:
         markup.add(types.InlineKeyboardButton(r[1], callback_data="pvpjoin2_" + code + "_" + str(r[0])))
     bot.send_message(int(uid), "🏁 Выбери тачку:", reply_markup=markup)
-
-
 
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pvpjoin2_"))
@@ -2021,8 +1889,6 @@ def pvp_join2(call):
     )
     bot.send_message(call.from_user.id, text2, reply_markup=markup)
     bot.answer_callback_query(call.id)
-
-
 
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pvpgo_"))
@@ -2074,8 +1940,6 @@ def pvp_go(call):
     except Exception: pass
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pvpdecline_"))
 def pvp_decline(call):
     code = call.data.split("_")[1]
@@ -2095,8 +1959,6 @@ def pvp_decline(call):
     if other:
         try: bot.send_message(int(other), "😔 Соперник отказался. Деньги не списаны.")
         except Exception: pass
-
-
 
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pvpstart_"))
@@ -2155,10 +2017,7 @@ def pvp_start(call):
     bot.answer_callback_query(call.id, "✅ Заезд завершён!")
 
 
-
-
 # ========== ЗАДАНИЯ ==========
-
 
 @bot.message_handler(func=lambda m: m.text == "🎯 Задания")
 def tasks_menu(message):
@@ -2195,8 +2054,6 @@ def tasks_menu(message):
     bot.send_message(message.chat.id, text[:4000], reply_markup=markup)
 
 
-
-
 def generate_daily_tasks():
     pool = [
         {"type": "sell_cars", "data": {}, "target": 2, "reward": 50000},
@@ -2210,8 +2067,6 @@ def generate_daily_tasks():
     ]
     random.shuffle(pool)
     return pool[:3]
-
-
 
 
 def task_title(ttype, tdata_json):
@@ -2228,16 +2083,12 @@ def task_title(ttype, tdata_json):
     return titles.get(ttype, ttype)
 
 
-
-
 def task_progress(uid, task_type, amount=1):
     today = datetime.now().strftime("%d.%m.%Y")
     conn = sqlite3.connect(DB_FILE); c = conn.cursor()
     c.execute("UPDATE tasks SET progress = progress + ? WHERE user_id=? AND task_type=? AND date=? AND done=0",
               (amount, str(uid), task_type, today))
     conn.commit(); conn.close()
-
-
 
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("taskclaim_"))
@@ -2264,10 +2115,7 @@ def task_claim(call):
     bot.send_message(call.from_user.id, "🎁 Награда: " + fmt(reward) + " ₽\n+50 опыта")
 
 
-
-
 # ========== ТОП ==========
-
 
 @bot.message_handler(func=lambda m: m.text == "🏆 Топ")
 def top_players(message):
@@ -2286,10 +2134,7 @@ def top_players(message):
     bot.send_message(message.chat.id, text)
 
 
-
-
 # ========== БОНУС ==========
-
 
 @bot.message_handler(func=lambda m: m.text == "🎁 Бонус")
 def bonus(message):
@@ -2319,10 +2164,7 @@ def bonus(message):
         reply_markup=main_kb(message.from_user.id))
 
 
-
-
 # ========== СОБЫТИЯ РЫНКА ==========
-
 
 def start_random_event():
     event = random.choice(EVENT_TYPES)
@@ -2360,8 +2202,7 @@ def start_random_event():
                 "📰 СОБЫТИЕ НА РЫНКЕ\n\n" + event["name"] + "\n\n" + event["desc"] +
                 "\n\n⏳ Длится 3 часа. Смотри в 📊 Рынок.")
         except Exception: pass
-# ========== УГОН ==========
-
+            # ========== УГОН ==========
 
 @bot.message_handler(func=lambda m: m.text == "🚨 Угон")
 def steal_menu(message):
@@ -2401,8 +2242,6 @@ def steal_menu(message):
         reply_markup=markup)
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("stealvictim_"))
 def steal_pick_car(call):
     if is_banned(call.from_user.id):
@@ -2420,8 +2259,6 @@ def steal_pick_car(call):
     markup.add(types.InlineKeyboardButton("❌ Отмена", callback_data="nothing"))
     bot.send_message(call.from_user.id, "🚨 Какую тачку угнать?", reply_markup=markup)
     bot.answer_callback_query(call.id)
-
-
 
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("stealgo_"))
@@ -2467,8 +2304,6 @@ def steal_go(call):
             "❌ ПРОВАЛ!\n\nТебя поймали на угоне " + car_name + ".\n💸 Штраф: 50 000 ₽\n-10 репутации")
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("sue_"))
 def sue_court(call):
     sid = int(call.data.split("_")[1])
@@ -2495,10 +2330,7 @@ def sue_court(call):
         bot.send_message(call.from_user.id, "⚖️ Суд отказал.")
 
 
-
-
 # ========== ПОГОНЯ ==========
-
 
 def start_chase(uid):
     conn = sqlite3.connect(DB_FILE); c = conn.cursor()
@@ -2530,8 +2362,6 @@ def start_chase(uid):
         return False
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("chase_run_"))
 def chase_run(call):
     cid = int(call.data.split("_")[2])
@@ -2560,8 +2390,6 @@ def chase_run(call):
             "🚔 ПОЙМАЛИ!\n\n💸 Штраф: 100 000 ₽\n-10 репутации\n\n🔒 " + car_name + " изъята на 24 ч.")
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("chase_giveup_"))
 def chase_giveup(call):
     cid = int(call.data.split("_")[2])
@@ -2576,8 +2404,6 @@ def chase_giveup(call):
     conn.commit(); conn.close()
     bot.answer_callback_query(call.id, "🚔 Сдался", show_alert=True)
     bot.send_message(call.from_user.id, "🚔 Ты сдался.\n💸 Штраф: 20 000 ₽")
-
-
 
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("chase_ignore_"))
@@ -2604,10 +2430,7 @@ def chase_ignore(call):
         bot.send_message(call.from_user.id, "🚨 ТАЧКУ КОНФИСКОВАЛИ!\n\n" + car_name + " изъята навсегда.")
 
 
-
-
 # ========== АДМИН-СИСТЕМА ==========
-
 
 @bot.message_handler(commands=['admin'])
 def admin_cmd(message):
@@ -2617,8 +2440,6 @@ def admin_cmd(message):
         return
     msg = bot.send_message(message.chat.id, "🔑 Введи секретный код:", reply_markup=types.ForceReply())
     bot.register_next_step_handler(msg, admin_code_step)
-
-
 
 
 def admin_code_step(message):
@@ -2635,8 +2456,6 @@ def admin_code_step(message):
                  reply_markup=main_kb(message.from_user.id))
 
 
-
-
 @bot.message_handler(commands=['unadmin'])
 def unadmin_cmd(message):
     if check_ban(message): return
@@ -2647,8 +2466,6 @@ def unadmin_cmd(message):
     c.execute("DELETE FROM admins WHERE user_id=?", (str(message.from_user.id),))
     conn.commit(); conn.close()
     bot.reply_to(message, "Ты больше не админ.", reply_markup=main_kb(message.from_user.id))
-
-
 
 
 @bot.message_handler(commands=['adminhelp'])
@@ -2675,8 +2492,6 @@ def admin_help(message):
     bot.send_message(message.chat.id, text)
 
 
-
-
 @bot.message_handler(commands=['addmoney'])
 def admin_addmoney(message):
     if not is_admin(message.from_user.id):
@@ -2696,8 +2511,6 @@ def admin_addmoney(message):
     bot.reply_to(message, "✅ " + tname + ": +" + fmt(amount) + " ₽")
     try: bot.send_message(int(tid), "💰 Админ начислил " + fmt(amount) + " ₽")
     except Exception: pass
-
-
 
 
 @bot.message_handler(commands=['takemoney'])
@@ -2720,8 +2533,6 @@ def admin_takemoney(message):
     bot.reply_to(message, "✅ " + tname + ": -" + fmt(amount) + " ₽")
 
 
-
-
 @bot.message_handler(commands=['setmoney'])
 def admin_setmoney(message):
     if not is_admin(message.from_user.id):
@@ -2739,8 +2550,6 @@ def admin_setmoney(message):
     c.execute("UPDATE players SET money=? WHERE user_id=?", (amount, tid))
     conn.commit(); conn.close()
     bot.reply_to(message, "✅ " + tname + ": баланс = " + fmt(amount))
-
-
 
 
 @bot.message_handler(commands=['addexp'])
@@ -2767,8 +2576,6 @@ def admin_addexp(message):
     bot.reply_to(message, "✅ " + tname + ": +" + str(amount) + " опыта")
 
 
-
-
 @bot.message_handler(commands=['addrep'])
 def admin_addrep(message):
     if not is_admin(message.from_user.id):
@@ -2786,8 +2593,6 @@ def admin_addrep(message):
     c.execute("UPDATE players SET reputation = MIN(100, MAX(0, reputation + ?)) WHERE user_id=?", (amount, tid))
     conn.commit(); conn.close()
     bot.reply_to(message, "✅ " + tname + ": репутация " + ("+" if amount >= 0 else "") + str(amount))
-
-
 
 
 @bot.message_handler(commands=['setrep'])
@@ -2810,8 +2615,6 @@ def admin_setrep(message):
     bot.reply_to(message, "✅ " + tname + ": репутация = " + str(amount))
 
 
-
-
 @bot.message_handler(commands=['setgarage'])
 def admin_setgarage(message):
     if not is_admin(message.from_user.id):
@@ -2830,8 +2633,6 @@ def admin_setgarage(message):
     c.execute("UPDATE players SET garage_size=? WHERE user_id=?", (level, tid))
     conn.commit(); conn.close()
     bot.reply_to(message, "✅ " + tname + ": гараж = " + str(level))
-
-
 
 
 @bot.message_handler(commands=['addcar'])
@@ -2870,8 +2671,6 @@ def admin_addcar(message):
     except Exception: pass
 
 
-
-
 @bot.message_handler(commands=['resetplayer'])
 def admin_resetplayer(message):
     if not is_admin(message.from_user.id):
@@ -2896,10 +2695,7 @@ def admin_resetplayer(message):
     except Exception: pass
 
 
-
-
 # ========== СПИСОК ИГРОКОВ ==========
-
 
 @bot.message_handler(commands=['users'])
 def users_cmd(message):
@@ -2909,15 +2705,11 @@ def users_cmd(message):
     show_users(message.chat.id)
 
 
-
-
 @bot.message_handler(func=lambda m: m.text == "👥 Игроки")
 def users_btn(message):
     if check_ban(message): return
     if not is_admin(message.from_user.id): return
     show_users(message.chat.id)
-
-
 
 
 def show_users(chat_id):
@@ -2937,8 +2729,6 @@ def show_users(chat_id):
         text += "• " + line + "\n"
         markup.add(types.InlineKeyboardButton("👤 " + name, callback_data="vp_" + str(uid)))
     bot.send_message(chat_id, text, reply_markup=markup)
-
-
 
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("vp_"))
@@ -3000,8 +2790,6 @@ def view_profile(call):
     bot.answer_callback_query(call.id)
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("ap_"))
 def admin_action(call):
     if not is_admin(call.from_user.id):
@@ -3059,10 +2847,7 @@ def admin_action(call):
         bot.answer_callback_query(call.id, "?")
 
 
-
-
 # ========== БАН / РАЗБАН / ЧЁРНЫЙ СПИСОК ==========
-
 
 @bot.message_handler(commands=['ban'])
 def ban_cmd(message):
@@ -3091,8 +2876,6 @@ def ban_cmd(message):
     except Exception: pass
 
 
-
-
 @bot.message_handler(commands=['unban'])
 def unban_cmd(message):
     if check_ban(message): return
@@ -3111,8 +2894,6 @@ def unban_cmd(message):
     bot.reply_to(message, "✅ " + tname + " разбанен.")
     try: bot.send_message(int(tid), "🔓 Ты разбанен.")
     except Exception: pass
-
-
 
 
 @bot.message_handler(commands=['banlist'])
@@ -3135,8 +2916,6 @@ def banlist_cmd(message):
     bot.send_message(message.chat.id, text, reply_markup=markup)
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("unban2_"))
 def unban2(call):
     if not is_admin(call.from_user.id):
@@ -3153,10 +2932,7 @@ def unban2(call):
     bot.answer_callback_query(call.id, "✅ " + row[0] + " разбанен.", show_alert=True)
 
 
-
-
 # ========== АДМИНЫ (владелец) ==========
-
 
 @bot.message_handler(commands=['admins'])
 def admins_list(message):
@@ -3180,8 +2956,6 @@ def admins_list(message):
     bot.send_message(message.chat.id, text, reply_markup=markup)
 
 
-
-
 @bot.callback_query_handler(func=lambda c: c.data.startswith("adm_del_"))
 def adm_del(call):
     if not is_owner(call.from_user.id):
@@ -3203,10 +2977,7 @@ def adm_del(call):
     except Exception: pass
 
 
-
-
 # ========== РАССЫЛКА ==========
-
 
 @bot.message_handler(func=lambda m: m.text == "📢 Сообщение")
 def ann_menu(message):
@@ -3214,8 +2985,6 @@ def ann_menu(message):
     if not is_admin(message.from_user.id): return
     msg = bot.send_message(message.chat.id, "Текст сообщения:", reply_markup=types.ForceReply())
     bot.register_next_step_handler(msg, ann_send)
-
-
 
 
 def ann_send(message):
@@ -3238,16 +3007,11 @@ def ann_send(message):
     bot.reply_to(message, "✅ Отправлено: " + str(sent) + " из " + str(len(uids)))
 
 
-
-
 # ========== ФОНОВЫЕ ЗАДАЧИ ==========
-
 
 def bonus_worker():
     while True:
         time.sleep(3600)
-
-
 
 
 def events_worker():
@@ -3258,8 +3022,6 @@ def events_worker():
         except Exception as e:
             print("Events error:", e)
             time.sleep(60)
-
-
 
 
 def chase_worker():
@@ -3283,22 +3045,15 @@ def chase_worker():
             time.sleep(60)
 
 
-
-
 # ========== ЗАПУСК ==========
-
 
 @app.route('/')
 def health():
     return "Car flipping game is running"
 
 
-
-
 def run_bot():
     bot.infinity_polling()
-
-
 
 
 if __name__ == '__main__':
@@ -3309,4 +3064,3 @@ if __name__ == '__main__':
     threading.Thread(target=chase_worker, daemon=True).start()
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-    
